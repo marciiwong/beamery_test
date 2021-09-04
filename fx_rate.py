@@ -67,7 +67,11 @@ if __name__ == '__main__':
     start_date = '2020-01-01' if type(start_date) != datetime.date else start_date
     end_date = datetime.datetime.today()
     
+    # set up tables and usp
     # pu.create_table()
+    # pu.create_monthly_fx_rate_usp()
+    # pu.create_fixed_rate_usp()
+    
     date_list = get_date_list(start_date=start_date, end_date=end_date)
     data = get_historic_fx_data(date_list=date_list)
     
@@ -76,8 +80,7 @@ if __name__ == '__main__':
         data = data[cols]
         pu.db_insert(data, 'daily_fx_rate')
     
-    pu.create_monthly_fx_rate_usp()
-    pu.create_fixed_rate_usp()
+    
     
     pu.query('call create_monthly_rate() ')
     pu.query('call create_fixed_rate() ')

@@ -65,8 +65,11 @@ def create_monthly_fx_rate_usp():
             language plpgsql as $$
             begin
             
+            --reset target table
             truncate table public.monthly_fx_rate;
             
+            -- create common table expression to get a table a rate 
+            -- for year_month source_currency, target_currency combination
             with monthly_data as 
             (select 
             	to_char(date, 'YYYY-MM') year_month,
@@ -85,7 +88,9 @@ def create_monthly_fx_rate_usp():
             	m.monthly_avg_rate
             from public.daily_fx_rate d
             left join monthly_data m
-            on to_char(d.date, 'YYYY-MM') = m.year_month 
+            on 
+                -- join on year_month from daily_fx_rate to get monthly avg rate
+                to_char(d.date, 'YYYY-MM') = m.year_month 
             	and d.source_currency = m.source_currency 
             	and d.target_currency = m.target_currency
             order by source_currency, target_currency, date;
@@ -99,8 +104,11 @@ def create_fixed_rate_usp():
             language plpgsql as $$
             begin
             
+            --reset target table
             truncate table public.six_months_fixed_rate;
             
+            -- create common table expression to get a table a rate 
+            -- for each year, first_half_year_indicator, source_currency, target_currency combination
             with fixed_rate_data as
             (select
             	source_currency,
@@ -124,7 +132,10 @@ def create_fixed_rate_usp():
             f.fixed_rate
             from public.daily_fx_rate d
             left join fixed_rate_data f
-            on extract(year from d.date-interval'6 month') = f.year and 
+            on 
+            	-- join with the year which is 6 months ago
+            	extract(year from d.date-interval'6 month') = f.year and 
+            	-- join with the indicator which indicate the date is first half or second half of year 6 months ago
             	case when extract(month from d.date-interval'6 month') < 7 then 1 else 0 end = f.first_half and 
             	d.source_currency = f.source_currency and 
             	d.target_currency = f.target_currency
