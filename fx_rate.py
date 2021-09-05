@@ -10,6 +10,7 @@ from utils import postgres_utils as pu
 import requests
 import datetime
 import pandas as pd
+import time
 
 
 def get_daily_fx_data(date='2021-01-01', to_cur='USD,GBP'):
@@ -38,7 +39,14 @@ def get_historic_fx_data(date_list):
     
     data = []
     for d in date_list:
-        data.append(get_daily_fx_data(date=d))
+        try:
+            data.append(get_daily_fx_data(date=d))
+        except Exception as e:
+            print(e)
+            print('Wait 10 seconds and retry')
+            time.sleep(10)
+            data.append(get_daily_fx_data(date=d))
+            
     df = pd.DataFrame(data)
     
     # transform data into required format
