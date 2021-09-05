@@ -43,6 +43,7 @@ def get_historic_fx_data(date_list):
     
     # transform data into required format
     df = df[['date', 'base', 'rates']]
+    # parse dictionary into separate columns
     df = pd.concat([df, df['rates'].apply(pd.Series)], axis=1)
     df = df.drop(columns=['rates'])
     
@@ -58,30 +59,22 @@ def get_historic_fx_data(date_list):
     df = df.rename(columns={'variable': 'target_currency', 'value': 'rate'})
     df = df.round(4)
     
+    if df.shape[0] > 0:
+        cols = list(pu.query('select * from public.daily_fx_rate limit 0').columns)
+        df = df[cols]
+        pu.db_insert(df, 'daily_fx_rate')
+    
     return df
 
 
 if __name__ == '__main__':
     
-    start_date = pu.query('select max(date) date from public.daily_fx_rate')['date'][0]
-    start_date = '2020-01-01' if type(start_date) != datetime.date else start_date
+    start_date = '2020-01-01'
     end_date = datetime.datetime.today()
-    
-    # set up tables and usp
-    # pu.create_table()
-    # pu.create_monthly_fx_rate_usp()
-    # pu.create_fixed_rate_usp()
     
     date_list = get_date_list(start_date=start_date, end_date=end_date)
     data = get_historic_fx_data(date_list=date_list)
-    
-    if data.shape[0] > 0:
-        cols = list(pu.query('select * from public.daily_fx_rate limit 0').columns)
-        data = data[cols]
-        pu.db_insert(data, 'daily_fx_rate')
-    
-    
-    
+
     pu.query('call create_monthly_rate() ')
     pu.query('call create_fixed_rate() ')
     
